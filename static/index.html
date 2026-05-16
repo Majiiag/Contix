@@ -345,6 +345,46 @@ select.filter:focus{outline:none;border-color:var(--sage)}
 </div>
 
 <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="importarArchivo(event)">
+
+<!-- MODAL GUÍA -->
+<div class="overlay" id="modalGuia">
+  <div class="modal" style="width:640px;max-width:95vw">
+    <h2>📖 Guía de uso — Contix</h2>
+    <p style="color:var(--sage-dark);font-weight:600;margin-bottom:4px">Todo lo que necesitás saber para empezar</p>
+    <div style="font-size:12px;line-height:1.8;color:var(--gray-700)">
+
+      <div style="background:var(--sage-pale);border-radius:8px;padding:12px 14px;margin-bottom:14px">
+        <strong style="color:var(--sage-dark)">¿Qué hace Contix?</strong><br>
+        Convierte extractos bancarios en PDF en asientos contables automáticamente. Subís el PDF, Contix detecta el banco, extrae los movimientos, los clasifica por categoría y genera el libro diario en partida doble listo para importar a ONVIO.
+      </div>
+
+      <strong style="color:var(--sage-dark);font-size:13px">Flujo mensual</strong>
+      <ol style="margin:8px 0 14px 18px;display:flex;flex-direction:column;gap:6px">
+        <li><strong>Creá la empresa</strong> — una sola vez. Desde el botón <em>Empresas</em> o <em>+ Nueva empresa</em> en el inicio.</li>
+        <li><strong>Creá un período</strong> — formato <code style="background:var(--gray-100);padding:1px 5px;border-radius:3px">AAAA-MM</code>, por ejemplo <code style="background:var(--gray-100);padding:1px 5px;border-radius:3px">2026-04</code> para Abril 2026. Un período por banco por mes.</li>
+        <li><strong>Subí el PDF</strong> — botón <em>📄 Subir PDF</em>. Contix detecta automáticamente el banco y carga todos los movimientos.</li>
+        <li><strong>Revisá los movimientos</strong> — en la pestaña <em>Movimientos</em> podés corregir categorías, fechas o importes si algo quedó mal.</li>
+        <li><strong>Verificá los asientos</strong> — en <em>Asientos</em> ves el libro diario en partida doble. Podés editar cuentas directamente.</li>
+        <li><strong>Exportá para ONVIO</strong> — botón <em>📤 ONVIO</em>. Genera el .xls listo para importar en ONVIO con el formato correcto.</li>
+      </ol>
+
+      <strong style="color:var(--sage-dark);font-size:13px">Bancos soportados</strong>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 14px">
+        ${['Santander','Galicia','BBVA Francés','ICBC','Banco Ciudad','Bapro','Columbia','Mercado Pago'].map(b=>`<span style="background:var(--sage-xlight);color:var(--sage-dark);padding:2px 10px;border-radius:99px;font-size:11px;font-weight:600">${b}</span>`).join('')}
+      </div>
+
+      <strong style="color:var(--sage-dark);font-size:13px">Plan de cuentas</strong><br>
+      <span style="display:block;margin:6px 0 14px">Es el mapeo entre las categorías de Contix y los códigos reales de tu plan contable en ONVIO. Importá el plan de ONVIO con el botón <em>📥 Importar plan ONVIO</em> y luego asignás qué código corresponde a cada categoría (gastos, ingresos, banco, etc.).</span>
+
+      <strong style="color:var(--sage-dark);font-size:13px">Reglas automáticas</strong><br>
+      <span style="display:block;margin:6px 0 14px">Determinan cómo se clasifica cada movimiento. Si la descripción del movimiento contiene alguna de las palabras de la regla, se asigna esa categoría. Podés agregar tus propias reglas o ajustar las existentes.</span>
+
+      <strong style="color:var(--sage-dark);font-size:13px">Dashboard y Balance anual</strong><br>
+      <span style="display:block;margin:6px 0 0">El Dashboard muestra todos los períodos cargados por banco, detecta meses faltantes y muestra ingresos/egresos por período. El Balance anual agrupa todos los meses del año con totales. Se actualiza automáticamente cada vez que cargás un PDF.</span>
+    </div>
+    <div class="modal-actions"><button class="btn btn-primary" onclick="cerrarModal('modalGuia')">Entendido</button></div>
+  </div>
+</div>
 <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="subirPDF(event)">
 <input type="file" id="planFileInput" accept=".xlsx,.xls,.json" style="display:none" onchange="importarPlan(event)">
 
@@ -366,6 +406,7 @@ select.filter:focus{outline:none;border-color:var(--sage)}
     <div class="nav-item" id="nav-resumen" style="display:none" onclick="switchView('resumen')"><span class="icon">📈</span>Resumen</div>
     <div class="nav-item" id="nav-balance" style="display:none" onclick="switchView('balance')"><span class="icon">🗓️</span>Balance anual</div>
     <div class="nav-section" id="ns-config" style="display:none">Configuración</div>
+    <div class="nav-item" id="nav-guia" onclick="abrirModal('modalGuia')"><span class="icon">📖</span>Guía de uso</div>
     <div class="nav-item" id="nav-plan" style="display:none" onclick="switchView('plan')"><span class="icon">🗂️</span>Plan de cuentas</div>
     <div class="nav-item" id="nav-reglas" style="display:none" onclick="switchView('reglas')"><span class="icon">⚡</span>Reglas</div>
   </nav>
@@ -503,8 +544,15 @@ select.filter:focus{outline:none;border-color:var(--sage)}
 
     <!-- REGLAS -->
     <div id="view-reglas" style="display:none">
-      <div class="notice">Las reglas se evalúan en orden. <strong>La primera que coincide gana.</strong></div>
-      <div class="toolbar"><button class="btn btn-primary" onclick="agregarRegla()">+ Nueva regla</button><button class="btn btn-ghost" onclick="aplicarReglas()">⚡ Aplicar</button></div>
+      <div class="notice" style="margin-bottom:10px">
+        <strong>¿Para qué sirven las reglas?</strong><br>
+        Cada vez que subís un PDF, Contix clasifica automáticamente cada movimiento en una categoría (Impuestos, Sueldos, Gastronomía, etc.).<br>
+        Las reglas definen esa clasificación: <em>"si la descripción del movimiento contiene alguna de estas palabras → asignar esta categoría"</em>.<br><br>
+        <strong>Ejemplo:</strong> si una regla tiene <code>afip|arba|iibb</code> → categoría <em>Impuestos y tasas</em>, entonces cualquier movimiento cuya descripción contenga "afip", "arba" o "iibb" se clasificará ahí automáticamente.<br><br>
+        El orden importa: si un movimiento coincide con la primera regla, no se evalúan las siguientes. Podés reordenarlas según prioridad.<br>
+        Al final del proceso podés ir a Movimientos y corregir manualmente cualquier categoría que haya quedado mal.
+      </div>
+      <div class="toolbar"><button class="btn btn-primary" onclick="agregarRegla()">+ Nueva regla</button><button class="btn btn-ghost" onclick="aplicarReglas()">⚡ Aplicar a movimientos actuales</button></div>
       <div class="card" style="overflow:hidden"><div class="table-wrap"><table class="reglas-table"><thead><tr><th style="width:30px">#</th><th>Si la descripción contiene (separar con |)</th><th style="width:220px">Categoría</th><th style="width:30px"></th></tr></thead><tbody id="reglasBody"></tbody></table></div></div>
     </div>
 
@@ -518,7 +566,7 @@ const API={get:u=>fetch(u).then(r=>r.json()),post:(u,d)=>fetch(u,{method:'POST',
 let empresas=[],EA=null,PA=null,movs=[],vista='inicio';
 let colorSel='#3d6b4f',editandoId=null,saveTimer=null,bancoDashTab=null;
 
-const COLS=['#3d6b4f','#4a7c59','#6b9e7a','#2563eb','#7c3aed','#c0392b','#d97706','#0891b2','#b7770d','#065f46'];
+const COLS=['#1a5c38','#2563eb','#9b1c1c','#92400e','#5b21b6','#0e7490','#be185d','#1e40af','#065f46','#7c2d12','#166534','#6d28d9','#0369a1','#9a3412','#115e59','#1d4ed8','#86198f','#92400e','#1f2937','#374151'];
 const MESES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
 // PLAN DEFAULT
@@ -618,10 +666,20 @@ async function guardarCliente(){
 async function delEmpresa(id){if(!confirm('¿Eliminar esta empresa y todos sus datos?'))return;SL('Eliminando...');await API.delete('/api/empresas/'+id);empresas=empresas.filter(e=>e.id!==id);if(EA&&EA.id===id){EA=null;PA=null;movs=[];}HL();renderCL();updateSidebar();mostrarInicio();}
 async function selEmpresa(id){
   SL('Cargando empresa...');
-  // Load full empresa data including cuentas_onvio
   try{const fullData=await API.get('/api/empresas');const found=fullData.find(e=>e.id===id);EA=found||empresas.find(e=>e.id===id)||null;}catch(ex){EA=empresas.find(e=>e.id===id)||null;}
   PA=null;movs=[];cerrarModal('modalClientes');updateSidebar();
-  if(EA){const ps=await API.get('/api/empresas/'+id+'/periodos');if(!ps.length){HL();switchView('empresa');setTimeout(()=>abrirModal('modalPeriodo'),300);}else{await cargarPeriodo(ps[ps.length-1].id);switchView('empresa');}}
+  if(EA){
+    const ps=await API.get('/api/empresas/'+id+'/periodos');
+    if(!ps.length){
+      HL();switchView('empresa');
+      setTimeout(()=>abrirModal('modalPeriodo'),300);
+    } else {
+      // Load last period and go straight to empresa dashboard
+      const lastPeriod=await API.get('/api/periodos/'+ps[ps.length-1].id);
+      PA=lastPeriod;movs=lastPeriod.movimientos||[];
+      updateSidebar();switchView('empresa');
+    }
+  }
   HL();
 }
 
@@ -666,7 +724,13 @@ async function renderInicioCards(){
 async function renderEmpresaDashboard(){
   if(!EA)return;
   SL('Cargando dashboard...');
-  const ps=await API.get('/api/empresas/'+EA.id+'/periodos');
+  // Load all periods WITH their movimientos
+  const psBasic=await API.get('/api/empresas/'+EA.id+'/periodos');
+  // Enrich each period with movimientos data
+  const ps=await Promise.all(psBasic.map(async p=>{
+    if(PA&&PA.id===p.id) return {...p,movimientos:movs};
+    try{const full=await API.get('/api/periodos/'+p.id);return full;}catch(e){return p;}
+  }));
 
   // Header empresa
   document.getElementById('empresaHeader').innerHTML=`
@@ -737,8 +801,13 @@ function renderBancoDash(ps){
     if(periodos_año.length){
       html+=`<div class="card" style="overflow:hidden;margin-top:8px"><div class="table-wrap"><table><thead><tr><th>Período</th><th>Banco</th><th style="text-align:right">Movimientos</th><th style="text-align:right">Ingresos ($)</th><th style="text-align:right">Egresos ($)</th><th style="text-align:right">Neto ($)</th><th></th></tr></thead><tbody>`;
       periodos_año.sort((a,b)=>{const pa=parsePeriodo(a.nombre),pb=parsePeriodo(b.nombre);if(!pa||!pb)return 0;return pa.mes-pb.mes;}).forEach(p=>{
-        const ms=p.movimientos||[];const cr=ms.filter(m=>m.tipo==='Crédito').reduce((s,m)=>s+(pm(m.credito)||0),0);const db=ms.filter(m=>m.tipo==='Débito').reduce((s,m)=>s+(pm(m.debito)||0),0);const nt=cr-db;const act=PA&&PA.id===p.id;
-        html+=`<tr style="${act?'background:var(--sage-pale);font-weight:600':''}"><td><span style="font-family:monospace;font-size:12px">${p.nombre}</span>${act?' <span class="badge badge-ok" style="font-size:9px">activo</span>':''}</td><td>${p.banco||'<span style="color:var(--gray-400)">—</span>'}</td><td style="text-align:right">${ms.length}</td><td style="text-align:right" class="amount-cr">${cr?'$'+fmt(cr):'-'}</td><td style="text-align:right" class="amount-db">${db?'$'+fmt(db):'-'}</td><td style="text-align:right;font-weight:700" class="${nt>=0?'amount-cr':'amount-db'}">${cr||db?'$'+fmt(nt):'-'}</td><td style="white-space:nowrap"><button class="btn btn-xs btn-primary" onclick="cargarPeriodo('${p.id}')">Abrir</button> <button class="btn btn-xs btn-danger" onclick="delPeriodo('${p.id}')">✕</button></td></tr>`;
+        // Use cached movimientos if this is the active period, otherwise use stored data
+        const ms=(PA&&PA.id===p.id)?movs:(p.movimientos||[]);
+        const cr=ms.filter(m=>m.tipo==='Crédito').reduce((s,m)=>s+(pm(m.credito)||0),0);
+        const db=ms.filter(m=>m.tipo==='Débito').reduce((s,m)=>s+(pm(m.debito)||0),0);
+        const nt=cr-db;const act=PA&&PA.id===p.id;
+        const nMov=ms.length||p.n_movimientos||0;
+        html+=`<tr style="${act?'background:var(--sage-pale);font-weight:600':''}"><td><span style="font-family:monospace;font-size:12px">${p.nombre}</span>${act?' <span class="badge badge-ok" style="font-size:9px">activo</span>':''}</td><td>${p.banco||'<span style="color:var(--gray-400)">—</span>'}</td><td style="text-align:right">${nMov}</td><td style="text-align:right" class="amount-cr">${cr?'$'+fmt(cr):'-'}</td><td style="text-align:right" class="amount-db">${db?'$'+fmt(db):'-'}</td><td style="text-align:right;font-weight:700" class="${nt>=0?'amount-cr':'amount-db'}">${nMov>0?'$'+fmt(nt):'-'}</td><td style="white-space:nowrap"><button class="btn btn-xs btn-primary" onclick="cargarPeriodo('${p.id}')">Abrir</button> <button class="btn btn-xs btn-danger" onclick="delPeriodo('${p.id}')">✕</button></td></tr>`;
       });
       html+='</tbody></table></div></div>';
     }
@@ -817,7 +886,12 @@ function renderResumen(){
 // BALANCE ANUAL
 async function renderBalance(){
   if(!EA)return;
-  const ps=await API.get('/api/empresas/'+EA.id+'/periodos');
+  // Load all periods with full movimientos
+  const psBasic=await API.get('/api/empresas/'+EA.id+'/periodos');
+  const ps=await Promise.all(psBasic.map(async p=>{
+    if(PA&&PA.id===p.id) return {...p,movimientos:movs};
+    try{const full=await API.get('/api/periodos/'+p.id);return full;}catch(e){return p;}
+  }));
   const años=[...new Set(ps.map(p=>{const pr=parsePeriodo(p.nombre);return pr?pr.año:null;}).filter(Boolean))].sort((a,b)=>b-a);
   const bancos=[...new Set(ps.map(p=>p.banco).filter(Boolean))];
   const yearSel=document.getElementById('balanceYear');const bancoSel=document.getElementById('balanceBanco');
@@ -886,9 +960,18 @@ async function subirPDF(ev){
   try{const fd=new FormData();fd.append('pdf',f);fd.append('banco','');const resp=await fetch('/api/procesar-pdf',{method:'POST',body:fd});const data=await resp.json();
   if(data.error){alert('Error: '+data.error);HL();return;}
   movs=data.movimientos.map(m=>({fecha:m.fecha||'',comprobante:m.comprobante||'',descripcion:m.descripcion||'',tipo:m.tipo||'Débito',debito:m.debito,credito:m.credito,saldo:m.saldo,categoria:m.categoria||'Sin clasificar',cuentaDebe:m.cuenta_debe||'',cuentaHaber:m.cuenta_haber||''}));
-  await saveMov();HL();
-  if(data.banco&&PA&&!PA.banco){PA.banco=data.banco.charAt(0).toUpperCase()+data.banco.slice(1);await API.put('/api/periodos/'+PA.id,{banco:PA.banco});updateSidebar();}
-  switchView('movimientos');alert('✓ '+movs.length+' movimientos\nBanco: '+(data.banco||'').toUpperCase());
+  if(data.banco&&PA&&!PA.banco){PA.banco=data.banco.charAt(0).toUpperCase()+data.banco.slice(1);}
+  // Save movimientos to server
+  await API.put('/api/periodos/'+PA.id,{movimientos:movs,banco:PA.banco||''});
+  // Update PA with fresh data
+  const updatedPeriodo=await API.get('/api/periodos/'+PA.id);
+  PA=updatedPeriodo;movs=PA.movimientos||[];
+  HL();
+  // Switch to movimientos view and render
+  switchView('movimientos');
+  renderMovimientos();
+  updateSidebar();
+  alert('✓ '+movs.length+' movimientos cargados\nBanco detectado: '+(data.banco||'').toUpperCase());
   }catch(ex){HL();alert('Error: '+ex.message);}
 }
 
@@ -1059,31 +1142,35 @@ Ahora podés usarlas en el Plan de Cuentas de Contix para mapear cada categoría
 function renderPlanConONVIO(){
   const plan = getPlan();
   const cuentasONVIO = (EA && EA.cuentas_onvio) ? EA.cuentas_onvio : [];
+  const hasONVIO = cuentasONVIO.length > 0;
 
-  // Si hay cuentas ONVIO, mostrar selector en lugar de input libre
-  const opts = cuentasONVIO.length
+  // Build select options once
+  const optsHTML = hasONVIO
     ? '<option value="">— Seleccionar cuenta ONVIO —</option>' +
       cuentasONVIO.map(c => `<option value="${c.codigo}">${c.codigo} — ${c.desc}</option>`).join('')
     : null;
 
+  function makeSelect(cat, lado, currentVal){
+    // Find matching option
+    const selectedCode = currentVal && currentVal.includes('/') ? currentVal : '';
+    const opts = optsHTML.replace(`value="${selectedCode}"`, `value="${selectedCode}" selected`);
+    return `<select onchange="upPlan('${cat}','${lado}',this.value)"
+      style="width:100%;border:none;font-size:11px;font-family:monospace;color:${lado==='debe'?'var(--sage-dark)':'var(--sage-mid)'};font-weight:700;background:transparent;cursor:pointer;padding:0;max-width:100%">
+      ${opts}
+    </select>`;
+  }
+
   document.getElementById('planGrid').innerHTML = Object.entries(plan).map(([cat,v]) => {
-    const debeInput = opts
-      ? `<select onchange="upPlan('${cat}','debe',this.value)" style="width:100%;border:none;font-size:12px;font-family:monospace;color:var(--sage-dark);font-weight:700;background:transparent;cursor:pointer">
-           ${opts.replace(`value="${v.debe}"`, `value="${v.debe}" selected`)}
-         </select>`
-      : `<input value="${v.debe}" onchange="upPlan('${cat}','debe',this.value)" style="color:var(--sage-dark);font-weight:700">`;
-
-    const haberInput = opts
-      ? `<select onchange="upPlan('${cat}','haber',this.value)" style="width:100%;border:none;font-size:12px;font-family:monospace;color:var(--sage-mid);font-weight:700;background:transparent;cursor:pointer">
-           ${opts.replace(`value="${v.haber}"`, `value="${v.haber}" selected`)}
-         </select>`
-      : `<input value="${v.haber}" onchange="upPlan('${cat}','haber',this.value)" style="color:var(--sage-mid);font-weight:700">`;
-
+    const debeEl  = hasONVIO ? makeSelect(cat,'debe',v.debe)  : `<input value="${v.debe}"  onchange="upPlan('${cat}','debe',this.value)"  style="color:var(--sage-dark);font-weight:700;font-family:monospace">`;
+    const haberEl = hasONVIO ? makeSelect(cat,'haber',v.haber) : `<input value="${v.haber}" onchange="upPlan('${cat}','haber',this.value)" style="color:var(--sage-mid);font-weight:700;font-family:monospace">`;
     return `<div class="plan-card">
-      <div class="plan-card-header"><span>${cat}</span><button class="btn btn-xs" style="background:rgba(255,255,255,.15);color:#fff;border:none" onclick="delCuenta('${cat}')">✕</button></div>
+      <div class="plan-card-header">
+        <span>${cat}</span>
+        <button class="btn btn-xs" style="background:rgba(255,255,255,.15);color:#fff;border:none" onclick="delCuenta('${cat}')">✕</button>
+      </div>
       <div class="plan-row">
-        <div class="plan-cell"><span class="plan-cell-label">Cuenta Debe ${cuentasONVIO.length?'(ONVIO)':''}</span>${debeInput}</div>
-        <div class="plan-cell"><span class="plan-cell-label">Cuenta Haber ${cuentasONVIO.length?'(ONVIO)':''}</span>${haberInput}</div>
+        <div class="plan-cell"><span class="plan-cell-label">Debe${hasONVIO?' (ONVIO)':''}</span>${debeEl}</div>
+        <div class="plan-cell"><span class="plan-cell-label">Haber${hasONVIO?' (ONVIO)':''}</span>${haberEl}</div>
       </div>
     </div>`;
   }).join('');
