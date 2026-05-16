@@ -12,7 +12,12 @@ app = Flask(__name__, static_folder='static', static_url_path='')
 
 # ── BASE DE DATOS ──────────────────────────────────────────
 BASE_DIR = Path(__file__).parent
-DB_PATH  = BASE_DIR / 'contix.db'
+# Usar volumen persistente si está disponible (Railway), sino carpeta local
+VOLUME_PATH = Path('/data')
+if VOLUME_PATH.exists() and VOLUME_PATH.is_dir():
+    DB_PATH = VOLUME_PATH / 'contix.db'
+else:
+    DB_PATH = BASE_DIR / 'contix.db'
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max upload
