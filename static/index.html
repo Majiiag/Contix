@@ -512,6 +512,7 @@ select.filter:focus{outline:none;border-color:var(--sage)}
 </div>
 
 <script>
+// Contix v6.1
 const API={get:u=>fetch(u).then(r=>r.json()),post:(u,d)=>fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(r=>r.json()),put:(u,d)=>fetch(u,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)}).then(r=>r.json()),delete:u=>fetch(u,{method:'DELETE'}).then(r=>r.json())};
 
 let empresas=[],EA=null,PA=null,movs=[],vista='inicio';
@@ -1025,14 +1026,12 @@ function importarPlanONVIO(event){
       });
 
       if(!cuentasImputables.length){
-        alert('No se encontraron cuentas imputables en el archivo.
-Verificá que sea el plan de cuentas de ONVIO.');
+        alert('No se encontraron cuentas imputables en el archivo.\nVerificá que sea el plan de cuentas de ONVIO.');
         return;
       }
 
       // Mostrar preview antes de importar
-      const preview = cuentasImputables.slice(0,5).map(c => `${c.codigo} — ${c.desc}`).join('
-');
+      const preview = cuentasImputables.slice(0,5).map(c => `${c.codigo} — ${c.desc}`).join('\n');
       if(!confirm(`Se encontraron ${cuentasImputables.length} cuentas imputables del plan ONVIO.
 
 Ejemplos:
