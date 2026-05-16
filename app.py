@@ -26,8 +26,9 @@ class Empresa(db.Model):
     cuit       = db.Column(db.String(20))
     iva        = db.Column(db.String(50))
     color      = db.Column(db.String(10), default='#1F3864')
-    plan       = db.Column(db.Text, default='{}')   # JSON
-    reglas     = db.Column(db.Text, default='[]')   # JSON
+    plan          = db.Column(db.Text, default='{}')   # JSON
+    reglas        = db.Column(db.Text, default='[]')   # JSON
+    cuentas_onvio = db.Column(db.Text, default='[]')   # JSON - plan ONVIO
     creado     = db.Column(db.DateTime, default=datetime.utcnow)
     periodos   = db.relationship('Periodo', backref='empresa', lazy=True, cascade='all, delete-orphan')
 
@@ -96,6 +97,7 @@ def empresa_to_dict(e):
         'iva': e.iva or 'Responsable Inscripto', 'color': e.color or '#1F3864',
         'plan': json.loads(e.plan or '{}') or PLAN_DEFAULT,
         'reglas': json.loads(e.reglas or '[]') or REGLAS_DEFAULT,
+        'cuentas_onvio': json.loads(e.cuentas_onvio or '[]'),
         'n_periodos': len(e.periodos),
     }
 
@@ -137,8 +139,9 @@ def update_empresa(id):
     if 'cuit'    in data: e.cuit   = data['cuit']
     if 'iva'     in data: e.iva    = data['iva']
     if 'color'   in data: e.color  = data['color']
-    if 'plan'    in data: e.plan   = json.dumps(data['plan'])
-    if 'reglas'  in data: e.reglas = json.dumps(data['reglas'])
+    if 'plan'          in data: e.plan          = json.dumps(data['plan'])
+    if 'reglas'        in data: e.reglas        = json.dumps(data['reglas'])
+    if 'cuentas_onvio' in data: e.cuentas_onvio = json.dumps(data['cuentas_onvio'])
     db.session.commit()
     return jsonify(empresa_to_dict(e))
 
